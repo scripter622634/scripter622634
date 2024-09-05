@@ -1,0 +1,111 @@
+local player = game:GetService("Players").LocalPlayer
+local mouse = player:GetMouse()
+local UserInputService = game:GetService("UserInputService")
+
+-- إنشاء ScreenGui في PlayerGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player:WaitForChild("PlayerGui")
+screenGui.Enabled = true -- في البداية نعرض ScreenGui
+
+print("ScreenGui Created")
+
+-- دالة لإنشاء الأزرار
+local function createButton(name, position, size)
+    local button = Instance.new("TextButton")
+    button.Size = size or UDim2.new(0, 200, 0, 50)
+    button.Position = position
+    button.Text = name
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    button.BackgroundTransparency = 0.5
+    button.BorderSizePixel = 0
+    button.Font = Enum.Font.GothamBold
+    button.TextSize = 18
+    button.TextStrokeTransparency = 0.5
+    button.Parent = screenGui
+
+    -- إضافة تأثيرات الجوانب الناعمة
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = button
+
+    return button
+end
+
+-- إنشاء زر "how to use" في أسفل يمين الشاشة
+local howToUseButton = createButton("How to use", UDim2.new(1, -210, 1, -60), UDim2.new(0, 200, 0, 50))
+
+-- إنشاء الأزرار الأخرى
+local tpButton = createButton("TP Click", UDim2.new(0.5, -100, 0, 10))
+
+-- تعريف متغيرات لتتبع حالة الأزرار
+local isEKeyPressed = false
+local isTPClickEnabled = false
+
+-- الاستماع إلى الضغط على زر "TP click" لتفعيل أو تعطيل النقل
+tpButton.MouseButton1Click:Connect(function()
+    isTPClickEnabled = not isTPClickEnabled
+    tpButton.Text = isTPClickEnabled and "TP Click: ON" or "TP Click: OFF"
+end)
+
+-- الاستماع إلى مدخلات اللاعب للضغط على زر E
+mouse.KeyDown:Connect(function(key)
+    if key == "e" then
+        isEKeyPressed = true
+    end
+end)
+
+-- الاستماع إلى مدخلات اللاعب لتحرير زر E
+mouse.KeyUp:Connect(function(key)
+    if key == "e" then
+        isEKeyPressed = false
+    end
+end)
+
+-- الاستماع إلى مدخلات اللاعب للضغط على زر الفأرة الأيسر
+mouse.Button1Down:Connect(function()
+    if isTPClickEnabled and isEKeyPressed then
+        local target = mouse.Target
+        if target then
+            local targetPosition = mouse.Hit.p
+            player.Character:MoveTo(targetPosition)
+        end
+    end
+end)
+
+-- عرض التعليمات عند الضغط على زر "How to use"
+howToUseButton.MouseButton1Click:Connect(function()
+    local instructions = Instance.new("TextLabel")
+    instructions.Size = UDim2.new(0.5, 0, 0.3, 0)
+    instructions.Position = UDim2.new(0.25, 0, 0.35, 0)
+    instructions.Text = "To teleport, press E and left mouse button at the same time.\n" ..
+                        "To hide the GUI, press CTRL."
+    instructions.TextColor3 = Color3.fromRGB(255, 255, 255)
+    instructions.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    instructions.BackgroundTransparency = 0.5
+    instructions.BorderSizePixel = 0
+    instructions.Font = Enum.Font.GothamBold
+    instructions.TextSize = 20
+    instructions.TextWrapped = true
+    instructions.Parent = screenGui
+
+    -- إخفاء التعليمات بعد 5 ثواني
+    wait(5)
+    instructions:Destroy()
+end)
+
+-- الاستماع إلى مدخلات اللاعب للضغط على مفتاح CTRL
+local ctrlPressed = false
+UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+    if gameProcessedEvent then return end
+    if input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.RightControl then
+        ctrlPressed = true
+        screenGui.Enabled = not screenGui.Enabled -- عكس حالة الظهور
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.RightControl then
+        ctrlPressed = false
+    end
+end)
